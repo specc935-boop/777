@@ -375,43 +375,60 @@
             config_holder.refresh_options(list)
         end 
 
-        function library:get_config()
-            local Config = {}
-            
-            for _, v in next, flags do
-                if type(v) == "table" and v.key then
-                    Config[_] = {active = v.active, mode = v.mode, key = tostring(v.key)}
-                elseif type(v) == "table" and v["Transparency"] and v["Color"] then
-                    Config[_] = {Transparency = v["Transparency"], Color = v["Color"]:ToHex()}
-                else
-                    Config[_] = v
-                end
-            end 
-            
-            return http_service:JSONEncode(Config)
+       function library:get_config()
+    local Config = {}
+    
+    for key, value in pairs(flags) do
+        -- Only save simple values, skip complex objects
+        if type(value) == "boolean" or type(value) == "number" or type(value) == "string" then
+            Config[key] = value
+        elseif type(value) == "table" and value.key then
+            Config[key] = {active = value.active, mode = value.mode, key = tostring(value.key)}
+        elseif type(value) == "table" and value["Transparency"] and value["Color"] then
+            Config[key] = {Transparency = value["Transparency"], Color = value["Color"]:ToHex()}
         end
+    end 
+    
+    return http_service:JSONEncode(Config)
+end
 
         function library:load_config(config_json) 
-            local config = http_service:JSONDecode(config_json)
-            
-            for _, v in config do 
-                local function_set = library.config_flags[_]
-                
-                if _ == "config_name_list" then 
-                    continue 
-                end
+    -- Skip if config is empty
+    if not config_json or config_json == "{}" then 
+        print("Config empty, skipping load")
+        return 
+    end
+    
+    local success, err = pcall(function()
+        local config = http_service:JSONDecode(config_json)
 
-                if function_set then 
-                    if type(v) == "table" and v["Transparency"] and v["Color"] then
-                        function_set(hex(v["Color"]), v["Transparency"])
-                    elseif type(v) == "table" and v["active"] then 
-                        function_set(v)
+        for key, value in pairs(config) do 
+            -- Skip internal keys
+            if key == "config_name_list" then 
+                continue 
+            end
+            
+            local function_set = library.config_flags[key]
+
+            if function_set then 
+                -- Wrap each function call in pcall to catch permission errors
+                pcall(function()
+                    if type(value) == "table" and value["Transparency"] and value["Color"] then
+                        function_set(hex(value["Color"]), value["Transparency"])
+                    elseif type(value) == "table" and value["active"] then 
+                        function_set(value)
                     else
-                        function_set(v)
+                        function_set(value)
                     end
-                end 
-            end 
-        end 
+                end)
+            end
+        end
+    end)
+    
+    if not success then
+        print("Config load partially failed (some protected instances skipped): " .. tostring(err))
+    end
+end
         
         function library:round(number, float) 
             local multiplier = 1 / (float or 1)
