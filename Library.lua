@@ -196,6 +196,18 @@
     end
 --
 
+-- Notification GUI (dedicated ScreenGui that stays visible independently)
+    do
+        local notifGui = Instance.new("ScreenGui")
+        notifGui.Name = "NotifGui"
+        notifGui.ResetOnSpawn = false
+        notifGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        notifGui.IgnoreGuiInset = true
+        notifGui.Parent = coregui
+        library["notif_gui"] = notifGui
+    end
+--
+
 -- Library functions 
     -- Misc functions
         function library:tween(obj, properties, easing_style, time) 
