@@ -3645,7 +3645,7 @@ end
 
             local items = cfg.items; do 
                 items[ "notification" ] = library:create( "Frame" , {
-                    Parent = library[ "items" ];
+    				Parent = library[ "notif_gui" ];
                     Size = dim2(0, 210, 0, 53);
                     Name = "\0";
                     BorderColor3 = rgb(0, 0, 0);
